@@ -153,7 +153,7 @@ public class OsgiInstallerWebConsolePlugin extends GenericServlet {
                 pw.printf("<tr><th>Entity ID</th><th>Digest/Priority</th><th>URL (Version)</th><th>State</th><th>Error</th></tr>");
                 rt = toActivate.getType();
             }
-            pw.printf("<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>",
+            pw.printf("<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>",
                     getEntityId(toActivate, group.getAlias()),
                     getInfo(toActivate),
                     getURL(toActivate),
@@ -264,11 +264,12 @@ public class OsgiInstallerWebConsolePlugin extends GenericServlet {
                 pw.printf("%s:%n", getType(toActivate));
                 rt = toActivate.getType();
             }
-            pw.printf("- %s: %s, %s, %s%n",
+            pw.printf("- %s: %s, %s, %s, %s%n",
                     getEntityId(toActivate, group.getAlias()),
                     getInfo(toActivate),
                     getURL(toActivate),
-                    toActivate.getState());
+                    toActivate.getState(),
+                    getError(toActivate));
         }
         pw.println();
 
@@ -284,11 +285,12 @@ public class OsgiInstallerWebConsolePlugin extends GenericServlet {
                     pw.printf("%s:%n", getType(first));
                     rt = first.getType();
                 }
-                pw.printf("* %s: %s, %s, %s%n",
+                pw.printf("* %s: %s, %s, %s, %s%n",
                         getEntityId(first, group.getAlias()),
                         getInfo(first),
                         getURL(first),
-                        getState(first));
+                        getState(first),
+                        getError(first));
                 if ( first.getAttribute(TaskResource.ATTR_INSTALL_EXCLUDED) != null ) {
                     pw.printf("  : %s",
                             first.getAttribute(TaskResource.ATTR_INSTALL_EXCLUDED));
@@ -300,10 +302,11 @@ public class OsgiInstallerWebConsolePlugin extends GenericServlet {
                 }
                 while ( iter.hasNext() ) {
                     final Resource resource = iter.next();
-                    pw.printf("  - %s, %s, %s%n",
+                    pw.printf("  - %s, %s, %s, %s%n",
                             getInfo(resource),
                             getURL(resource),
-                            resource.getState());
+                            resource.getState(),
+                            getError(resource));
                 }
             }
         }
