@@ -24,13 +24,15 @@ import java.io.PrintWriter;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Dictionary;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.Hashtable;
+import java.util.Set;
 
 import javax.servlet.GenericServlet;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 
-import org.apache.commons.lang3.StringUtils;
-import org.apache.sling.api.request.ResponseUtil;
 import org.apache.sling.installer.api.serializer.ConfigurationSerializerFactory;
 import org.apache.sling.installer.api.serializer.ConfigurationSerializerFactory.Format;
 import org.osgi.framework.Constants;
@@ -45,21 +47,56 @@ import org.slf4j.LoggerFactory;
     property = {
         Constants.SERVICE_VENDOR + "=The Apache Software Foundation",
         Constants.SERVICE_DESCRIPTION + "=Apache Sling OSGi Installer Configuration Serializer Web Console Plugin",
-        "felix.webconsole.label=osgi-installer-config-printer",
+        "felix.webconsole.label=" + ConfigurationSerializerWebConsolePlugin.LABEL,
         "felix.webconsole.title=OSGi Installer Configuration Printer",
         "felix.webconsole.category=OSGi"
     })
 @SuppressWarnings("serial")
 public class ConfigurationSerializerWebConsolePlugin extends GenericServlet {
 
+    public static final String LABEL = "osgi-installer-config-printer";
+    private static final String RES_LOC = LABEL + "/res/ui";
     private static final String PARAMETER_PID = "pid";
     private static final String PARAMETER_FORMAT = "format";
+
+    // copied from org.apache.sling.installer.factories.configuration.impl.ConfigUtil
+    /**
+     * This property has been used in older versions to keep track where the
+     * configuration has been installed from.
+     */
+    private static final String CONFIG_PATH_KEY = "org.apache.sling.installer.osgi.path";
+
+    /**
+     * This property has been used in older versions to keep track of factory
+     * configurations.
+     */
+    private static final String ALIAS_KEY = "org.apache.sling.installer.osgi.factoryaliaspid";
+
+    /** Configuration properties to ignore when printing */
+    private static final Set<String> IGNORED_PROPERTIES = new HashSet<>();
+    static {
+        IGNORED_PROPERTIES.add(Constants.SERVICE_PID);
+        IGNORED_PROPERTIES.add(CONFIG_PATH_KEY);
+        IGNORED_PROPERTIES.add(ALIAS_KEY);
+        IGNORED_PROPERTIES.add(ConfigurationAdmin.SERVICE_FACTORYPID);
+    }
     
     /** The logger */
     private final Logger LOGGER =  LoggerFactory.getLogger(ConfigurationSerializerWebConsolePlugin.class);
 
     @Reference
     ConfigurationAdmin configurationAdmin;
+
+    /**
+     * Method to retrieve static resources from this bundle.
+     */
+    @SuppressWarnings("unused")
+    private URL getResource(final String path) {
+        if (path.startsWith("/" + RES_LOC)) {
+            return this.getClass().getResource(path.substring(LABEL.length()+1));
+        }
+        return null;
+    }
 
     @Override
     public void service(final ServletRequest request, final ServletResponse response)
@@ -68,22 +105,23 @@ public class ConfigurationSerializerWebConsolePlugin extends GenericServlet {
         final String pid = request.getParameter(PARAMETER_PID);
         final String format = request.getParameter(PARAMETER_FORMAT);
         ConfigurationSerializerFactory.Format serializationFormat = Format.JSON;
-        if (StringUtils.isNotBlank(format)) {
+        if (format != null && !format.trim().isEmpty()) {
             try {
                 serializationFormat = ConfigurationSerializerFactory.Format.valueOf(format);
             } catch (IllegalArgumentException e) {
-                LOGGER.warn("Illegal parameter 'format' given", e);
+                LOGGER.warn("Illegal parameter 'format' given, falling back to default '{}'", serializationFormat, e);
             }
         }
         final PrintWriter pw = response.getWriter();
 
+        pw.println("<script type=\"text/javascript\" src=\"" + RES_LOC + "/clipboard.js\"></script>");
         pw.print("<form method='get'>");
         pw.println("<table class='content' cellpadding='0' cellspacing='0' width='100%'>");
 
         titleHtml(
                 pw,
                 "OSGi Installer Configuration Printer",
-                "To emit the current configuration for a specific OSGi service just enter its PID, select a serialization format and click 'Print'");
+                "To emit the configuration properties just enter the configuration PID, select a <a href='https://sling.apache.org/documentation/bundles/configuration-installer-factory.html'>serialization format</a> and click 'Print'");
 
         tr(pw);
         tdLabel(pw, "PID");
@@ -93,10 +131,10 @@ public class ConfigurationSerializerWebConsolePlugin extends GenericServlet {
         pw.print(PARAMETER_PID);
         pw.print("' value='");
         if ( pid != null ) {
-            pw.print(ResponseUtil.escapeXml(pid));
+            pw.print(escapeXml(pid));
         }
         
-        pw.println("' class='input' size='50'>");
+        pw.println("' class='input' size='120'>");
         closeTd(pw);
         closeTr(pw);
         closeTr(pw);
@@ -104,14 +142,13 @@ public class ConfigurationSerializerWebConsolePlugin extends GenericServlet {
         tr(pw);
         tdLabel(pw, "Serialization Format");
         tdContent(pw);
-        // TODO: select current value!
         pw.print("<select name='");
         pw.print(PARAMETER_FORMAT);
         pw.println("'>");
-        pw.println("<option value='JSON'>OSGi Configurator JSON</option>");
-        pw.println("<option value='CONFIG'>Apache Felix Config</option>");
-        pw.println("<option value='PROPERTIES'>Java Properties</option>");
-        pw.println("<option value='PROPERTIES_XML'>Java Properties (XML)</option>");
+        option(pw, "JSON", "OSGi Configurator JSON", format);
+        option(pw, "CONFIG", "Apache Felix Config", format);
+        option(pw, "PROPERTIES", "Java Properties", format);
+        option(pw, "PROPERTIES_XML", "Java Properties (XML)", format);
         pw.println("</select>");
 
         pw.println("&nbsp;&nbsp;<input type='submit' value='Print' class='submit'>");
@@ -119,21 +156,32 @@ public class ConfigurationSerializerWebConsolePlugin extends GenericServlet {
         closeTd(pw);
         closeTr(pw);
 
-        if (StringUtils.isNotBlank(pid)) {
+        if (pid != null && !pid.trim().isEmpty()) {
             tr(pw);
-            tdLabel(pw, "Serialized Configuration");
+            tdLabel(pw, "Serialized Configuration Properties");
             tdContent(pw);
             
             Configuration configuration = configurationAdmin.getConfiguration(pid);
-            Dictionary<String, Object> dictionary = configuration.getProperties();
-            if (dictionary == null) {
-                pw.println("No configuration for pid '" + pid + "' found!");
+            Dictionary<String, Object> properties = configuration.getProperties();
+            if (properties == null) {
+                pw.print("<p class='ui-state-error-text'>");
+                pw.print("No configuration properties for pid '" + pid + "' found!");
+                pw.println("</p>");
             } else {
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                ConfigurationSerializerFactory.create(serializationFormat).serialize(dictionary, baos);
-                pw.println("<textarea rows=\"20\" cols=\"120\" readonly>");
-                pw.print(new String(baos.toByteArray(), StandardCharsets.UTF_8));
-                pw.println("</textarea>");
+                properties = cleanConfiguration(properties);
+                try {
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    ConfigurationSerializerFactory.create(serializationFormat).serialize(properties, baos);
+                    pw.println("<textarea rows=\"20\" cols=\"120\" id=\"output\" readonly>");
+                    pw.print(new String(baos.toByteArray(), StandardCharsets.UTF_8));
+                    pw.println("</textarea>");
+                    pw.println("<button type='button' id='copy'>Copy to Clipboard</a>");
+                } catch (Throwable e) {
+                    pw.print("<p class='ui-state-error-text'>");
+                    pw.print("Error serializing pid '" + pid + "': " + e.getMessage());
+                    pw.println("</p>");
+                    LOGGER.warn("Error serializing pid '{}'", pid, e);
+                }
             }
             closeTd(pw);
             closeTr(pw);
@@ -143,6 +191,53 @@ public class ConfigurationSerializerWebConsolePlugin extends GenericServlet {
         pw.print("</form>");
     }
 
+    /**
+     * Copied from org.apache.sling.api.request.ResponseUtil
+     * Escape XML text
+     * @param input The input text
+     * @return The escaped text
+     */
+    private String escapeXml(final String input) {
+        if (input == null) {
+            return null;
+        }
+
+        final StringBuilder b = new StringBuilder(input.length());
+        for(int i = 0;i  < input.length(); i++) {
+            final char c = input.charAt(i);
+            if(c == '&') {
+                b.append("&amp;");
+            } else if(c == '<') {
+                b.append("&lt;");
+            } else if(c == '>') {
+                b.append("&gt;");
+            } else if(c == '"') {
+                b.append("&quot;");
+            } else if(c == '\'') {
+                b.append("&apos;");
+            } else {
+                b.append(c);
+            }
+        }
+        return b.toString();
+    }
+
+    // copied from org.apache.sling.installer.factories.configuration.impl.ConfigUtil
+    /**
+     * Remove all ignored properties
+     */
+    public static Dictionary<String, Object> cleanConfiguration(final Dictionary<String, Object> config) {
+        final Dictionary<String, Object> cleanedConfig = new Hashtable<>();
+        final Enumeration<String> e = config.keys();
+        while(e.hasMoreElements()) {
+            final String key = e.nextElement();
+            if ( !IGNORED_PROPERTIES.contains(key) ) {
+                cleanedConfig.put(key, config.get(key));
+            }
+        }
+
+        return cleanedConfig;
+    }
 
     private void tdContent(final PrintWriter pw) {
         pw.print("<td class='content' colspan='2'>");
@@ -152,22 +247,13 @@ public class ConfigurationSerializerWebConsolePlugin extends GenericServlet {
         pw.print("</td>");
     }
 
-    @SuppressWarnings("unused")
-    private URL getResource(final String path) {
-        if (path.startsWith("/servletresolver/res/ui")) {
-            return this.getClass().getResource(path.substring(16));
-        } else {
-            return null;
-        }
-    }
-
     private void closeTr(final PrintWriter pw) {
         pw.println("</tr>");
     }
 
     private void tdLabel(final PrintWriter pw, final String label) {
         pw.print("<td class='content'>");
-        pw.print(ResponseUtil.escapeXml(label));
+        pw.print(label);
         pw.println("</td>");
     }
 
@@ -175,18 +261,29 @@ public class ConfigurationSerializerWebConsolePlugin extends GenericServlet {
         pw.println("<tr class='content'>");
     }
 
-    
+    private void option(final PrintWriter pw, String value, String label, String selectedValue) {
+        pw.print("<option value='");
+        pw.print(value);
+        pw.print("'");
+        if (value.equals(selectedValue)) {
+            pw.print(" selected");
+        }
+        pw.print(">");
+        pw.print(label);
+        pw.println("</option>");
+    }
+
     private void titleHtml(final PrintWriter pw, final String title, final String description) {
         tr(pw);
         pw.print("<th colspan='3' class='content container'>");
-        pw.print(ResponseUtil.escapeXml(title));
+        pw.print(escapeXml(title));
         pw.println("</th>");
         closeTr(pw);
 
         if (description != null) {
             tr(pw);
             pw.print("<td colspan='3' class='content'>");
-            pw.print(ResponseUtil.escapeXml(description));
+            pw.print(description);
             pw.println("</th>");
             closeTr(pw);
         }
