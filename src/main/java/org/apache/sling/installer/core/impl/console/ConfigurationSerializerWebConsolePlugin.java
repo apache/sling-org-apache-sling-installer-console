@@ -165,7 +165,7 @@ public class ConfigurationSerializerWebConsolePlugin extends GenericServlet {
             Dictionary<String, Object> properties = configuration.getProperties();
             if (properties == null) {
                 pw.print("<p class='ui-state-error-text'>");
-                pw.print("No configuration properties for pid '" + pid + "' found!");
+                pw.print("No configuration properties for pid '" + escapeXml(pid) + "' found!");
                 pw.println("</p>");
             } else {
                 properties = cleanConfiguration(properties);
@@ -178,7 +178,7 @@ public class ConfigurationSerializerWebConsolePlugin extends GenericServlet {
                     pw.println("<button type='button' id='copy'>Copy to Clipboard</a>");
                 } catch (Throwable e) {
                     pw.print("<p class='ui-state-error-text'>");
-                    pw.print("Error serializing pid '" + pid + "': " + e.getMessage());
+                    pw.print("Error serializing pid '" + escapeXml(pid) + "': " + e.getMessage());
                     pw.println("</p>");
                     LOGGER.warn("Error serializing pid '{}'", pid, e);
                 }
