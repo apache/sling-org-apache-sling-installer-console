@@ -20,6 +20,8 @@ package org.apache.sling.installer.core.impl.console;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.net.URL;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
@@ -48,14 +50,19 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
     property = {
         Constants.SERVICE_VENDOR + "=The Apache Software Foundation",
         Constants.SERVICE_DESCRIPTION + "=Apache Sling OSGi Installer Web Console Plugin",
-        "felix.webconsole.label=osgi-installer",
+        "felix.webconsole.label=" + OsgiInstallerWebConsolePlugin.LABEL,
         "felix.webconsole.title=OSGi Installer",
         "felix.webconsole.category=OSGi",
         "felix.webconsole.configprinter.modes=zip",
-        "felix.webconsole.configprinter.modes=txt"
+        "felix.webconsole.configprinter.modes=txt",
+        "felix.webconsole.css=" + OsgiInstallerWebConsolePlugin.RES_LOC + "/list.css"
     })
 @SuppressWarnings("serial")
 public class OsgiInstallerWebConsolePlugin extends GenericServlet {
+
+    public static final String LABEL = "osgi-installer";
+    protected static final String RES_LOC = LABEL + "/res/ui";
+
 
     @Reference(policyOption=ReferencePolicyOption.GREEDY)
     private InfoProvider installer;
@@ -130,23 +137,34 @@ public class OsgiInstallerWebConsolePlugin extends GenericServlet {
     @Override
     public void service(final ServletRequest req, final ServletResponse res)
             throws IOException {
-        final PrintWriter pw = res.getWriter();
+        StringWriter bufferedWriter = new StringWriter();
+        final PrintWriter pw = new PrintWriter(bufferedWriter);
 
+        PrintWriter headerPrintWriter = res.getWriter();
         final InstallationState state = this.installer.getInstallationState();
-        pw.print("<p class='statline ui-state-highlight'>Apache Sling OSGi Installer");
+        headerPrintWriter.print("<p class='statline ui-state-highlight'>Apache Sling OSGi Installer");
         if ( state.getActiveResources().size() == 0 && state.getInstalledResources().size() == 0 && state.getUntransformedResources().size() == 0 ) {
-            pw.print(" - no resources registered.");
+            headerPrintWriter.print(" - no resources registered.");
         }
-        pw.print("</p>");
-
+        
+        
+        
+        headerPrintWriter.print("</p>");
+        headerPrintWriter.println("<ul class=list>");
+        headerPrintWriter.println("<li>Active Resources");
+        headerPrintWriter.println("<ul>");
+        
+        
         String rt = null;
-        for(final ResourceGroup group : state.getActiveResources()) {
+        for (final ResourceGroup group : state.getActiveResources()) {
             final Resource toActivate = group.getResources().get(0);
             if ( !toActivate.getType().equals(rt) ) {
                 if ( rt != null ) {
                     pw.println("</tbody></table>");
                 }
-                pw.println("<div class='ui-widget-header ui-corner-top buttonGroup' style='height: 15px;'>");
+                String anchor = "active-" + getType(toActivate);
+                headerPrintWriter.println("<li><a href='#" + anchor + "'>" + getType(toActivate) + "</a></li>");
+                pw.println("<div id='" + anchor + "' class='ui-widget-header ui-corner-top buttonGroup' style='height: 15px;'>");
                 pw.printf("<span style='float: left; margin-left: 1em;'>Active Resources - %s</span>", getType(toActivate));
                 pw.println("</div>");
                 pw.println("<table class='nicetable'><tbody>");
@@ -162,9 +180,15 @@ public class OsgiInstallerWebConsolePlugin extends GenericServlet {
         }
         if ( rt != null ) {
             pw.println("</tbody></table>");
+        } else {
+            headerPrintWriter.println("<li>none</li>");
         }
         rt = null;
 
+        headerPrintWriter.println("</ul></li>");
+        headerPrintWriter.println("<li>Processed Resources");
+        headerPrintWriter.println("<ul>");
+        
         for(final ResourceGroup group : state.getInstalledResources()) {
             final Collection<Resource> resources = group.getResources();
             if (resources.size() > 0) {
@@ -174,7 +198,10 @@ public class OsgiInstallerWebConsolePlugin extends GenericServlet {
                     if ( rt != null ) {
                         pw.println("</tbody></table>");
                     }
-                    pw.println("<div class='ui-widget-header ui-corner-top buttonGroup' style='height: 15px;'>");
+                    String anchor = "processed-" + getType(first);
+                    headerPrintWriter.println("<li><a href='#" + anchor + "'>" + getType(first) + "</a></li>");
+                    
+                    pw.println("<div id='" + anchor + "' class='ui-widget-header ui-corner-top buttonGroup' style='height: 15px;'>");
                     pw.printf("<span style='float: left; margin-left: 1em;'>Processed Resources - %s</span>", getType(first));
                     pw.println("</div>");
                     pw.println("<table class='nicetable'><tbody>");
@@ -220,7 +247,13 @@ public class OsgiInstallerWebConsolePlugin extends GenericServlet {
         }
         if ( rt != null ) {
             pw.println("</tbody></table>");
+        } else {
+            headerPrintWriter.println("<li>none</li>");
         }
+
+        headerPrintWriter.println("</ul></li>");
+        headerPrintWriter.println("<li>Untransformed Resources");
+        headerPrintWriter.println("<ul>");
 
         rt = null;
         for(final RegisteredResource registeredResource : state.getUntransformedResources()) {
@@ -228,7 +261,10 @@ public class OsgiInstallerWebConsolePlugin extends GenericServlet {
                 if ( rt != null ) {
                     pw.println("</tbody></table>");
                 }
-                pw.println("<div class='ui-widget-header ui-corner-top buttonGroup' style='height: 15px;'>");
+                String anchor = "untransformed-" + getType(registeredResource);
+                headerPrintWriter.println("<li><a href='#" + anchor + "'>" + getType(registeredResource) + "</a></li>");
+                
+                pw.println("<div id='" + anchor + "' class='ui-widget-header ui-corner-top buttonGroup' style='height: 15px;'>");
                 pw.printf("<span style='float: left; margin-left: 1em;'>Untransformed Resources - %s</span>", getType(registeredResource));
                 pw.println("</div>");
                 pw.println("<table class='nicetable'><tbody>");
@@ -242,7 +278,13 @@ public class OsgiInstallerWebConsolePlugin extends GenericServlet {
         }
         if ( rt != null ) {
             pw.println("</tbody></table>");
+        } else {
+            headerPrintWriter.println("<li>none</li>");
         }
+
+        headerPrintWriter.println("</ul></li>");
+        headerPrintWriter.println("</ul>");
+        headerPrintWriter.print(bufferedWriter.toString());
     }
 
     /**
@@ -324,5 +366,16 @@ public class OsgiInstallerWebConsolePlugin extends GenericServlet {
                     getInfo(registeredResource),
                     registeredResource.getURL());
         }
+    }
+    
+    /**
+     * Method to retrieve static resources from this bundle.
+     */
+    @SuppressWarnings("unused")
+    private URL getResource(final String path) {
+        if (path.startsWith("/" + RES_LOC)) {
+            return this.getClass().getResource(path.substring(LABEL.length()+1));
+        }
+        return null;
     }
 }
