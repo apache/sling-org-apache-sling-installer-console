@@ -138,40 +138,37 @@ public class OsgiInstallerWebConsolePlugin extends GenericServlet {
     public void service(final ServletRequest req, final ServletResponse res)
             throws IOException {
         StringWriter bufferedWriter = new StringWriter();
-        final PrintWriter pw = new PrintWriter(bufferedWriter);
+        final PrintWriter bufferedPw = new PrintWriter(bufferedWriter);
 
-        PrintWriter headerPrintWriter = res.getWriter();
+        PrintWriter pw = res.getWriter();
         final InstallationState state = this.installer.getInstallationState();
-        headerPrintWriter.print("<p class='statline ui-state-highlight'>Apache Sling OSGi Installer");
+        pw.print("<p class='statline ui-state-highlight'>Apache Sling OSGi Installer");
         if ( state.getActiveResources().size() == 0 && state.getInstalledResources().size() == 0 && state.getUntransformedResources().size() == 0 ) {
-            headerPrintWriter.print(" - no resources registered.");
+            pw.print(" - no resources registered.");
         }
         
-        
-        
-        headerPrintWriter.print("</p>");
-        headerPrintWriter.println("<ul class=list>");
-        headerPrintWriter.println("<li>Active Resources");
-        headerPrintWriter.println("<ul>");
-        
+        pw.print("</p>");
+        pw.println("<ul class=list>");
+        pw.println("<li>Active Resources");
+        pw.println("<ul>");
         
         String rt = null;
         for (final ResourceGroup group : state.getActiveResources()) {
             final Resource toActivate = group.getResources().get(0);
             if ( !toActivate.getType().equals(rt) ) {
                 if ( rt != null ) {
-                    pw.println("</tbody></table>");
+                    bufferedPw.println("</tbody></table>");
                 }
                 String anchor = "active-" + getType(toActivate);
-                headerPrintWriter.println("<li><a href='#" + anchor + "'>" + getType(toActivate) + "</a></li>");
-                pw.println("<div id='" + anchor + "' class='ui-widget-header ui-corner-top buttonGroup' style='height: 15px;'>");
-                pw.printf("<span style='float: left; margin-left: 1em;'>Active Resources - %s</span>", getType(toActivate));
-                pw.println("</div>");
-                pw.println("<table class='nicetable'><tbody>");
-                pw.printf("<tr><th>Entity ID</th><th>Digest/Priority</th><th>URL (Version)</th><th>State</th><th>Error</th></tr>");
+                pw.println("<li><a href='#" + anchor + "'>" + getType(toActivate) + "</a></li>");
+                bufferedPw.println("<div id='" + anchor + "' class='ui-widget-header ui-corner-top buttonGroup' style='height: 15px;'>");
+                bufferedPw.printf("<span style='float: left; margin-left: 1em;'>Active Resources - %s</span>", getType(toActivate));
+                bufferedPw.println("</div>");
+                bufferedPw.println("<table class='nicetable'><tbody>");
+                bufferedPw.printf("<tr><th>Entity ID</th><th>Digest/Priority</th><th>URL (Version)</th><th>State</th><th>Error</th></tr>");
                 rt = toActivate.getType();
             }
-            pw.printf("<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>",
+            bufferedPw.printf("<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>",
                     getEntityId(toActivate, group.getAlias()),
                     getInfo(toActivate),
                     getURL(toActivate),
@@ -179,15 +176,15 @@ public class OsgiInstallerWebConsolePlugin extends GenericServlet {
                     getError(toActivate));
         }
         if ( rt != null ) {
-            pw.println("</tbody></table>");
+            bufferedPw.println("</tbody></table>");
         } else {
-            headerPrintWriter.println("<li>none</li>");
+            pw.println("<li>none</li>");
         }
         rt = null;
 
-        headerPrintWriter.println("</ul></li>");
-        headerPrintWriter.println("<li>Processed Resources");
-        headerPrintWriter.println("<ul>");
+        pw.println("</ul></li>");
+        pw.println("<li>Processed Resources");
+        pw.println("<ul>");
         
         for(final ResourceGroup group : state.getInstalledResources()) {
             final Collection<Resource> resources = group.getResources();
@@ -196,48 +193,48 @@ public class OsgiInstallerWebConsolePlugin extends GenericServlet {
                 final Resource first = iter.next();
                 if ( !first.getType().equals(rt) ) {
                     if ( rt != null ) {
-                        pw.println("</tbody></table>");
+                        bufferedPw.println("</tbody></table>");
                     }
                     String anchor = "processed-" + getType(first);
-                    headerPrintWriter.println("<li><a href='#" + anchor + "'>" + getType(first) + "</a></li>");
+                    pw.println("<li><a href='#" + anchor + "'>" + getType(first) + "</a></li>");
                     
-                    pw.println("<div id='" + anchor + "' class='ui-widget-header ui-corner-top buttonGroup' style='height: 15px;'>");
-                    pw.printf("<span style='float: left; margin-left: 1em;'>Processed Resources - %s</span>", getType(first));
-                    pw.println("</div>");
-                    pw.println("<table class='nicetable'><tbody>");
-                    pw.printf("<tr><th>Entity ID</th><th>Digest/Priority</th><th>URL (Version)</th><th>State</th><th>Error</th></tr>");
+                    bufferedPw.println("<div id='" + anchor + "' class='ui-widget-header ui-corner-top buttonGroup' style='height: 15px;'>");
+                    bufferedPw.printf("<span style='float: left; margin-left: 1em;'>Processed Resources - %s</span>", getType(first));
+                    bufferedPw.println("</div>");
+                    bufferedPw.println("<table class='nicetable'><tbody>");
+                    bufferedPw.printf("<tr><th>Entity ID</th><th>Digest/Priority</th><th>URL (Version)</th><th>State</th><th>Error</th></tr>");
                     rt = first.getType();
                 }
-                pw.print("<tr><td>");
-                pw.print(getEntityId(first, group.getAlias()));
-                pw.print("</td><td>");
-                pw.print(getInfo(first));
-                pw.print("</td><td>");
-                pw.print(getURL(first));
-                pw.print("</td><td>");
-                pw.print(getState(first));
+                bufferedPw.print("<tr><td>");
+                bufferedPw.print(getEntityId(first, group.getAlias()));
+                bufferedPw.print("</td><td>");
+                bufferedPw.print(getInfo(first));
+                bufferedPw.print("</td><td>");
+                bufferedPw.print(getURL(first));
+                bufferedPw.print("</td><td>");
+                bufferedPw.print(getState(first));
                 if ( first.getState() == ResourceState.INSTALLED ) {
                     final long lastChange = first.getLastChange();
                     if ( lastChange > 0 ) {
-                        pw.print("<br/>");
-                        pw.print(formatDate(lastChange));
+                        bufferedPw.print("<br/>");
+                        bufferedPw.print(formatDate(lastChange));
                     }
                 }
-                pw.print("</td><td>");
-                pw.print(getError(first));
-                pw.print("</td></tr>");
+                bufferedPw.print("</td><td>");
+                bufferedPw.print(getError(first));
+                bufferedPw.print("</td></tr>");
                 if ( first.getAttribute(TaskResource.ATTR_INSTALL_EXCLUDED) != null ) {
-                    pw.printf("<tr><td></td><td colspan='2'>%s</td><td></td><td></td></tr>",
+                    bufferedPw.printf("<tr><td></td><td colspan='2'>%s</td><td></td><td></td></tr>",
                             first.getAttribute(TaskResource.ATTR_INSTALL_EXCLUDED));
                 }
                 if ( first.getAttribute(TaskResource.ATTR_INSTALL_INFO) != null ) {
-                    pw.printf("<tr><td></td><td colspan='2'>%s</td><td></td><td></td></tr>",
+                    bufferedPw.printf("<tr><td></td><td colspan='2'>%s</td><td></td><td></td></tr>",
                             first.getAttribute(TaskResource.ATTR_INSTALL_INFO));
 
                 }
                 while ( iter.hasNext() ) {
                     final Resource resource = iter.next();
-                    pw.printf("<tr><td></td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>",
+                    bufferedPw.printf("<tr><td></td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>",
                             getInfo(resource),
                             getURL(resource),
                             resource.getState(),
@@ -246,45 +243,45 @@ public class OsgiInstallerWebConsolePlugin extends GenericServlet {
             }
         }
         if ( rt != null ) {
-            pw.println("</tbody></table>");
+            bufferedPw.println("</tbody></table>");
         } else {
-            headerPrintWriter.println("<li>none</li>");
+            pw.println("<li>none</li>");
         }
 
-        headerPrintWriter.println("</ul></li>");
-        headerPrintWriter.println("<li>Untransformed Resources");
-        headerPrintWriter.println("<ul>");
+        pw.println("</ul></li>");
+        pw.println("<li>Untransformed Resources");
+        pw.println("<ul>");
 
         rt = null;
         for(final RegisteredResource registeredResource : state.getUntransformedResources()) {
             if ( !registeredResource.getType().equals(rt) ) {
                 if ( rt != null ) {
-                    pw.println("</tbody></table>");
+                    bufferedPw.println("</tbody></table>");
                 }
                 String anchor = "untransformed-" + getType(registeredResource);
-                headerPrintWriter.println("<li><a href='#" + anchor + "'>" + getType(registeredResource) + "</a></li>");
+                pw.println("<li><a href='#" + anchor + "'>" + getType(registeredResource) + "</a></li>");
                 
-                pw.println("<div id='" + anchor + "' class='ui-widget-header ui-corner-top buttonGroup' style='height: 15px;'>");
-                pw.printf("<span style='float: left; margin-left: 1em;'>Untransformed Resources - %s</span>", getType(registeredResource));
-                pw.println("</div>");
-                pw.println("<table class='nicetable'><tbody>");
-                pw.printf("<tr><th>Digest/Priority</th><th>URL</th></tr>");
+                bufferedPw.println("<div id='" + anchor + "' class='ui-widget-header ui-corner-top buttonGroup' style='height: 15px;'>");
+                bufferedPw.printf("<span style='float: left; margin-left: 1em;'>Untransformed Resources - %s</span>", getType(registeredResource));
+                bufferedPw.println("</div>");
+                bufferedPw.println("<table class='nicetable'><tbody>");
+                bufferedPw.printf("<tr><th>Digest/Priority</th><th>URL</th></tr>");
 
                 rt = registeredResource.getType();
             }
-            pw.printf("<tr><td>%s</td><td>%s</td></tr>",
+            bufferedPw.printf("<tr><td>%s</td><td>%s</td></tr>",
                     getInfo(registeredResource),
                     registeredResource.getURL());
         }
         if ( rt != null ) {
-            pw.println("</tbody></table>");
+            bufferedPw.println("</tbody></table>");
         } else {
-            headerPrintWriter.println("<li>none</li>");
+            pw.println("<li>none</li>");
         }
 
-        headerPrintWriter.println("</ul></li>");
-        headerPrintWriter.println("</ul>");
-        headerPrintWriter.print(bufferedWriter.toString());
+        pw.println("</ul></li>");
+        pw.println("</ul>");
+        pw.print(bufferedWriter.toString());
     }
 
     /**
