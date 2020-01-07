@@ -21,14 +21,12 @@ package org.apache.sling.installer.core.impl.console;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.net.URL;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 
-import javax.servlet.GenericServlet;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 
@@ -55,13 +53,13 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
         "felix.webconsole.category=OSGi",
         "felix.webconsole.configprinter.modes=zip",
         "felix.webconsole.configprinter.modes=txt",
-        "felix.webconsole.css=" + OsgiInstallerWebConsolePlugin.RES_LOC + "/list.css"
+        "felix.webconsole.css=" + OsgiInstallerWebConsolePlugin.RES_LOC + "list.css"
     })
 @SuppressWarnings("serial")
-public class OsgiInstallerWebConsolePlugin extends GenericServlet {
+public class OsgiInstallerWebConsolePlugin extends AbstractWebConsolePlugin {
 
     public static final String LABEL = "osgi-installer";
-    protected static final String RES_LOC = LABEL + "/res/ui";
+    protected static final String RES_LOC = LABEL + "/res/ui/";
 
 
     @Reference(policyOption=ReferencePolicyOption.GREEDY)
@@ -159,8 +157,8 @@ public class OsgiInstallerWebConsolePlugin extends GenericServlet {
                 if ( rt != null ) {
                     bufferedPw.println("</tbody></table>");
                 }
-                String anchor = "active-" + getType(toActivate);
-                pw.println("<li><a href='#" + anchor + "'>" + getType(toActivate) + "</a></li>");
+                String anchor = "active-" + escapeXml(getType(toActivate));
+                pw.println("<li><a href='#" + anchor + "'>" + escapeXml(getType(toActivate)) + "</a></li>");
                 bufferedPw.println("<div id='" + anchor + "' class='ui-widget-header ui-corner-top buttonGroup' style='height: 15px;'>");
                 bufferedPw.printf("<span style='float: left; margin-left: 1em;'>Active Resources - %s</span>", getType(toActivate));
                 bufferedPw.println("</div>");
@@ -169,11 +167,11 @@ public class OsgiInstallerWebConsolePlugin extends GenericServlet {
                 rt = toActivate.getType();
             }
             bufferedPw.printf("<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>",
-                    getEntityId(toActivate, group.getAlias()),
-                    getInfo(toActivate),
-                    getURL(toActivate),
-                    toActivate.getState(),
-                    getError(toActivate));
+                    escapeXml(getEntityId(toActivate, group.getAlias())),
+                    escapeXml(getInfo(toActivate)),
+                    escapeXml(getURL(toActivate)),
+                    escapeXml(toActivate.getState().toString()),
+                    escapeXml(getError(toActivate)));
         }
         if ( rt != null ) {
             bufferedPw.println("</tbody></table>");
@@ -195,8 +193,8 @@ public class OsgiInstallerWebConsolePlugin extends GenericServlet {
                     if ( rt != null ) {
                         bufferedPw.println("</tbody></table>");
                     }
-                    String anchor = "processed-" + getType(first);
-                    pw.println("<li><a href='#" + anchor + "'>" + getType(first) + "</a></li>");
+                    String anchor = "processed-" + escapeXml(getType(first));
+                    pw.println("<li><a href='#" + anchor + "'>" + escapeXml(getType(first)) + "</a></li>");
                     
                     bufferedPw.println("<div id='" + anchor + "' class='ui-widget-header ui-corner-top buttonGroup' style='height: 15px;'>");
                     bufferedPw.printf("<span style='float: left; margin-left: 1em;'>Processed Resources - %s</span>", getType(first));
@@ -206,13 +204,13 @@ public class OsgiInstallerWebConsolePlugin extends GenericServlet {
                     rt = first.getType();
                 }
                 bufferedPw.print("<tr><td>");
-                bufferedPw.print(getEntityId(first, group.getAlias()));
+                bufferedPw.print(escapeXml(getEntityId(first, group.getAlias())));
                 bufferedPw.print("</td><td>");
-                bufferedPw.print(getInfo(first));
+                bufferedPw.print(escapeXml(getInfo(first)));
                 bufferedPw.print("</td><td>");
-                bufferedPw.print(getURL(first));
+                bufferedPw.print(escapeXml(getURL(first)));
                 bufferedPw.print("</td><td>");
-                bufferedPw.print(getState(first));
+                bufferedPw.print(escapeXml(getState(first)));
                 if ( first.getState() == ResourceState.INSTALLED ) {
                     final long lastChange = first.getLastChange();
                     if ( lastChange > 0 ) {
@@ -221,24 +219,24 @@ public class OsgiInstallerWebConsolePlugin extends GenericServlet {
                     }
                 }
                 bufferedPw.print("</td><td>");
-                bufferedPw.print(getError(first));
+                bufferedPw.print(escapeXml(getError(first)));
                 bufferedPw.print("</td></tr>");
                 if ( first.getAttribute(TaskResource.ATTR_INSTALL_EXCLUDED) != null ) {
                     bufferedPw.printf("<tr><td></td><td colspan='2'>%s</td><td></td><td></td></tr>",
-                            first.getAttribute(TaskResource.ATTR_INSTALL_EXCLUDED));
+                            escapeXml(first.getAttribute(TaskResource.ATTR_INSTALL_EXCLUDED).toString()));
                 }
                 if ( first.getAttribute(TaskResource.ATTR_INSTALL_INFO) != null ) {
                     bufferedPw.printf("<tr><td></td><td colspan='2'>%s</td><td></td><td></td></tr>",
-                            first.getAttribute(TaskResource.ATTR_INSTALL_INFO));
+                            escapeXml(first.getAttribute(TaskResource.ATTR_INSTALL_INFO).toString()));
 
                 }
                 while ( iter.hasNext() ) {
                     final Resource resource = iter.next();
                     bufferedPw.printf("<tr><td></td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>",
-                            getInfo(resource),
-                            getURL(resource),
-                            resource.getState(),
-                            getError(resource));
+                            escapeXml(getInfo(resource)),
+                            escapeXml(getURL(resource)),
+                            escapeXml(resource.getState().toString()),
+                            escapeXml(getError(resource)));
                 }
             }
         }
@@ -258,8 +256,8 @@ public class OsgiInstallerWebConsolePlugin extends GenericServlet {
                 if ( rt != null ) {
                     bufferedPw.println("</tbody></table>");
                 }
-                String anchor = "untransformed-" + getType(registeredResource);
-                pw.println("<li><a href='#" + anchor + "'>" + getType(registeredResource) + "</a></li>");
+                String anchor = "untransformed-" + escapeXml(getType(registeredResource));
+                pw.println("<li><a href='#" + anchor + "'>" + escapeXml(getType(registeredResource)) + "</a></li>");
                 
                 bufferedPw.println("<div id='" + anchor + "' class='ui-widget-header ui-corner-top buttonGroup' style='height: 15px;'>");
                 bufferedPw.printf("<span style='float: left; margin-left: 1em;'>Untransformed Resources - %s</span>", getType(registeredResource));
@@ -270,8 +268,8 @@ public class OsgiInstallerWebConsolePlugin extends GenericServlet {
                 rt = registeredResource.getType();
             }
             bufferedPw.printf("<tr><td>%s</td><td>%s</td></tr>",
-                    getInfo(registeredResource),
-                    registeredResource.getURL());
+                    escapeXml(getInfo(registeredResource)),
+                    escapeXml(registeredResource.getURL()));
         }
         if ( rt != null ) {
             bufferedPw.println("</tbody></table>");
@@ -364,15 +362,11 @@ public class OsgiInstallerWebConsolePlugin extends GenericServlet {
                     registeredResource.getURL());
         }
     }
-    
-    /**
-     * Method to retrieve static resources from this bundle.
-     */
-    @SuppressWarnings("unused")
-    private URL getResource(final String path) {
-        if (path.startsWith("/" + RES_LOC)) {
-            return this.getClass().getResource(path.substring(LABEL.length()+1));
-        }
-        return null;
+
+    @Override
+    String getRelativeResourcePrefix() {
+        return RES_LOC;
     }
+    
+    
 }

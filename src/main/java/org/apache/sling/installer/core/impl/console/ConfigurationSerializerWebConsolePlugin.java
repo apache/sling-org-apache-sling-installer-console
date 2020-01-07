@@ -21,7 +21,6 @@ package org.apache.sling.installer.core.impl.console;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Dictionary;
 import java.util.Enumeration;
@@ -29,7 +28,6 @@ import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Set;
 
-import javax.servlet.GenericServlet;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 
@@ -52,10 +50,10 @@ import org.slf4j.LoggerFactory;
         "felix.webconsole.category=OSGi"
     })
 @SuppressWarnings("serial")
-public class ConfigurationSerializerWebConsolePlugin extends GenericServlet {
+public class ConfigurationSerializerWebConsolePlugin extends AbstractWebConsolePlugin {
 
     public static final String LABEL = "osgi-installer-config-printer";
-    private static final String RES_LOC = LABEL + "/res/ui";
+    private static final String RES_LOC = LABEL + "/res/ui/";
     private static final String PARAMETER_PID = "pid";
     private static final String PARAMETER_FORMAT = "format";
 
@@ -87,17 +85,6 @@ public class ConfigurationSerializerWebConsolePlugin extends GenericServlet {
     @Reference
     ConfigurationAdmin configurationAdmin;
 
-    /**
-     * Method to retrieve static resources from this bundle.
-     */
-    @SuppressWarnings("unused")
-    private URL getResource(final String path) {
-        if (path.startsWith("/" + RES_LOC)) {
-            return this.getClass().getResource(path.substring(LABEL.length()+1));
-        }
-        return null;
-    }
-
     @Override
     public void service(final ServletRequest request, final ServletResponse response)
             throws IOException {
@@ -114,7 +101,7 @@ public class ConfigurationSerializerWebConsolePlugin extends GenericServlet {
         }
         final PrintWriter pw = response.getWriter();
 
-        pw.println("<script type=\"text/javascript\" src=\"" + RES_LOC + "/clipboard.js\"></script>");
+        pw.println("<script type=\"text/javascript\" src=\"" + RES_LOC + "clipboard.js\"></script>");
         pw.print("<form method='get'>");
         pw.println("<table class='content' cellpadding='0' cellspacing='0' width='100%'>");
 
@@ -191,37 +178,6 @@ public class ConfigurationSerializerWebConsolePlugin extends GenericServlet {
         pw.print("</form>");
     }
 
-    /**
-     * Copied from org.apache.sling.api.request.ResponseUtil
-     * Escape XML text
-     * @param input The input text
-     * @return The escaped text
-     */
-    private String escapeXml(final String input) {
-        if (input == null) {
-            return null;
-        }
-
-        final StringBuilder b = new StringBuilder(input.length());
-        for(int i = 0;i  < input.length(); i++) {
-            final char c = input.charAt(i);
-            if(c == '&') {
-                b.append("&amp;");
-            } else if(c == '<') {
-                b.append("&lt;");
-            } else if(c == '>') {
-                b.append("&gt;");
-            } else if(c == '"') {
-                b.append("&quot;");
-            } else if(c == '\'') {
-                b.append("&apos;");
-            } else {
-                b.append(c);
-            }
-        }
-        return b.toString();
-    }
-
     // copied from org.apache.sling.installer.factories.configuration.impl.ConfigUtil
     /**
      * Remove all ignored properties
@@ -287,6 +243,11 @@ public class ConfigurationSerializerWebConsolePlugin extends GenericServlet {
             pw.println("</th>");
             closeTr(pw);
         }
+    }
+
+    @Override
+    String getRelativeResourcePrefix() {
+        return RES_LOC;
     }
 
 }
