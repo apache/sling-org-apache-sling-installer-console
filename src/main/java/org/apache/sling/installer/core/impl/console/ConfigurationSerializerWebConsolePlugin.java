@@ -148,7 +148,7 @@ public class ConfigurationSerializerWebConsolePlugin extends AbstractWebConsoleP
             tdLabel(pw, "Serialized Configuration Properties");
             tdContent(pw);
             
-            Configuration configuration = configurationAdmin.getConfiguration(pid);
+            Configuration configuration = configurationAdmin.getConfiguration(pid, null);
             Dictionary<String, Object> properties = configuration.getProperties();
             if (properties == null) {
                 pw.print("<p class='ui-state-error-text'>");
@@ -156,8 +156,7 @@ public class ConfigurationSerializerWebConsolePlugin extends AbstractWebConsoleP
                 pw.println("</p>");
             } else {
                 properties = cleanConfiguration(properties);
-                try {
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
                     ConfigurationSerializerFactory.create(serializationFormat).serialize(properties, baos);
                     pw.println("<textarea rows=\"20\" cols=\"120\" id=\"output\" readonly>");
                     pw.print(new String(baos.toByteArray(), StandardCharsets.UTF_8));
