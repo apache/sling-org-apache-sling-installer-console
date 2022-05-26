@@ -1,0 +1,1 @@
+-includeresource: @org.apache.felix.cm.json-[0-9.]*.jar
