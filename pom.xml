@@ -30,7 +30,7 @@
     <artifactId>org.apache.sling.installer.console</artifactId>
     <version>1.1.1-SNAPSHOT</version>
 
-    <name>Apache Sling Installer WebConsole Plugin</name>
+    <name>Apache Sling Installer Web Console Plugin</name>
     <description> 
         Provides a web console plugin for the OSGi installer
     </description>
