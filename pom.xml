@@ -28,7 +28,7 @@
     </parent>
 
     <artifactId>org.apache.sling.installer.console</artifactId>
-    <version>1.1.1-SNAPSHOT</version>
+    <version>1.1.2</version>
 
     <name>Apache Sling Installer Web Console Plugin</name>
     <description> 
@@ -37,14 +37,14 @@
 
     <properties>
         <sling.java.version>8</sling.java.version>
-        <project.build.outputTimestamp>2020-02-21T08:32:38Z</project.build.outputTimestamp>
+        <project.build.outputTimestamp>2023-05-15T10:56:29Z</project.build.outputTimestamp>
     </properties>
 
     <scm>
         <connection>scm:git:https://gitbox.apache.org/repos/asf/sling-org-apache-sling-installer-console.git</connection>
         <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/sling-org-apache-sling-installer-console.git</developerConnection>
         <url>https://gitbox.apache.org/repos/asf?p=sling-org-apache-sling-installer-console.git</url>
-      <tag>HEAD</tag>
+      <tag>org.apache.sling.installer.console-1.1.2</tag>
   </scm>
 
     <dependencies>
