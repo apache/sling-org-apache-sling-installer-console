@@ -38,11 +38,8 @@ abstract class AbstractWebConsolePlugin extends GenericServlet {
     private URL getResource(final String path) {
         if (path.startsWith("/" + getRelativeResourcePrefix())) {
             // strip label
-            int index = path.indexOf('/', 1);
-            if (index <= 0) {
-                throw new IllegalStateException("The relativeResourcePrefix must contain at least one '/'");
-            }
-            return this.getClass().getResource(path.substring(index));
+            String resPath = path.substring(path.indexOf('/', 1));
+            return this.getClass().getResource(resPath);
         }
         return null;
     }

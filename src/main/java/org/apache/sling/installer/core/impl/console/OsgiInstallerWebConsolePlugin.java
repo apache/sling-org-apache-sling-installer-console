@@ -62,7 +62,7 @@ public class OsgiInstallerWebConsolePlugin extends AbstractWebConsolePlugin {
     protected static final String RES_LOC = LABEL + "/res/ui/";
 
     @Reference(policyOption = ReferencePolicyOption.GREEDY)
-    private InfoProvider installer;
+    private transient InfoProvider installer;
 
     private String getType(final RegisteredResource rsrc) {
         final String type = rsrc.getType();
@@ -124,9 +124,6 @@ public class OsgiInstallerWebConsolePlugin extends AbstractWebConsolePlugin {
      * Format a date
      */
     private synchronized String formatDate(final long time) {
-        if (time == -1) {
-            return "-";
-        }
         final Date d = new Date(time);
         return dateFormat.format(d);
     }
@@ -139,9 +136,9 @@ public class OsgiInstallerWebConsolePlugin extends AbstractWebConsolePlugin {
         PrintWriter pw = res.getWriter();
         final InstallationState state = this.installer.getInstallationState();
         pw.print("<p class='statline ui-state-highlight'>Apache Sling OSGi Installer");
-        if (state.getActiveResources().size() == 0
-                && state.getInstalledResources().size() == 0
-                && state.getUntransformedResources().size() == 0) {
+        if (state.getActiveResources().isEmpty()
+                && state.getInstalledResources().isEmpty()
+                && state.getUntransformedResources().isEmpty()) {
             pw.print(" - no resources registered.");
         }
 
@@ -191,7 +188,7 @@ public class OsgiInstallerWebConsolePlugin extends AbstractWebConsolePlugin {
 
         for (final ResourceGroup group : state.getInstalledResources()) {
             final Collection<Resource> resources = group.getResources();
-            if (resources.size() > 0) {
+            if (!resources.isEmpty()) {
                 final Iterator<Resource> iter = resources.iterator();
                 final Resource first = iter.next();
                 if (!first.getType().equals(rt)) {
@@ -332,7 +329,7 @@ public class OsgiInstallerWebConsolePlugin extends AbstractWebConsolePlugin {
         rt = null;
         for (final ResourceGroup group : state.getInstalledResources()) {
             final Collection<Resource> resources = group.getResources();
-            if (resources.size() > 0) {
+            if (!resources.isEmpty()) {
                 final Iterator<Resource> iter = resources.iterator();
                 final Resource first = iter.next();
                 if (!first.getType().equals(rt)) {
