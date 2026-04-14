@@ -18,9 +18,6 @@
  */
 package org.apache.sling.installer.core.impl.console;
 
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -30,6 +27,8 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
 import org.apache.sling.installer.api.InstallableResource;
 import org.apache.sling.installer.api.info.InfoProvider;
 import org.apache.sling.installer.api.info.InstallationState;
@@ -44,7 +43,7 @@ import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
 
 @Component(
-        service = javax.servlet.Servlet.class,
+        service = jakarta.servlet.Servlet.class,
         property = {
             Constants.SERVICE_VENDOR + "=The Apache Software Foundation",
             Constants.SERVICE_DESCRIPTION + "=Apache Sling OSGi Installer Web Console Plugin",
@@ -205,7 +204,7 @@ public class OsgiInstallerWebConsolePlugin extends AbstractWebConsolePlugin {
                             getType(first));
                     bufferedPw.println("</div>");
                     bufferedPw.println("<table class='nicetable'><tbody>");
-                    bufferedPw.printf(
+                    bufferedPw.print(
                             "<tr><th>Entity ID</th><th>Digest/Priority</th><th>URL (Version)</th><th>State</th><th>Error</th></tr>");
                     rt = first.getType();
                 }
