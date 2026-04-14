@@ -18,15 +18,15 @@
  */
 package org.apache.sling.installer.core.impl.console;
 
-import java.net.URL;
-
 import javax.servlet.GenericServlet;
+
+import java.net.URL;
 
 @SuppressWarnings("serial")
 abstract class AbstractWebConsolePlugin extends GenericServlet {
 
     /**
-     * 
+     *
      * @return the prefix under which resources are requested (must not start with "/", must end with "/")
      */
     abstract String getRelativeResourcePrefix();
@@ -38,11 +38,8 @@ abstract class AbstractWebConsolePlugin extends GenericServlet {
     private URL getResource(final String path) {
         if (path.startsWith("/" + getRelativeResourcePrefix())) {
             // strip label
-            int index = path.indexOf('/', 1);
-            if (index <= 0) {
-                throw new IllegalStateException("The relativeResourcePrefix must contain at least one '/'");
-            }
-            return this.getClass().getResource(path.substring(index));
+            String resPath = path.substring(path.indexOf('/', 1));
+            return this.getClass().getResource(resPath);
         }
         return null;
     }
@@ -57,19 +54,19 @@ abstract class AbstractWebConsolePlugin extends GenericServlet {
         if (input == null) {
             return null;
         }
-    
+
         final StringBuilder b = new StringBuilder(input.length());
-        for(int i = 0;i  < input.length(); i++) {
+        for (int i = 0; i < input.length(); i++) {
             final char c = input.charAt(i);
-            if(c == '&') {
+            if (c == '&') {
                 b.append("&amp;");
-            } else if(c == '<') {
+            } else if (c == '<') {
                 b.append("&lt;");
-            } else if(c == '>') {
+            } else if (c == '>') {
                 b.append("&gt;");
-            } else if(c == '"') {
+            } else if (c == '"') {
                 b.append("&quot;");
-            } else if(c == '\'') {
+            } else if (c == '\'') {
                 b.append("&apos;");
             } else {
                 b.append(c);
