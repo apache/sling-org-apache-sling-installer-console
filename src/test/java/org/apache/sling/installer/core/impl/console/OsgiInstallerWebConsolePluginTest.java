@@ -34,8 +34,8 @@ import org.apache.sling.installer.api.tasks.ResourceState;
 import org.apache.sling.installer.api.tasks.TaskResource;
 import org.apache.sling.testing.mock.sling.junit5.SlingContext;
 import org.apache.sling.testing.mock.sling.junit5.SlingContextExtension;
-import org.apache.sling.testing.mock.sling.servlet.MockSlingHttpServletRequest;
-import org.apache.sling.testing.mock.sling.servlet.MockSlingHttpServletResponse;
+import org.apache.sling.testing.mock.sling.servlet.MockSlingJakartaHttpServletRequest;
+import org.apache.sling.testing.mock.sling.servlet.MockSlingJakartaHttpServletResponse;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -81,8 +81,8 @@ class OsgiInstallerWebConsolePluginTest {
         // mock InfoProvider
         mockInstallationState();
 
-        final @NotNull MockSlingHttpServletRequest req = context.request();
-        final @NotNull MockSlingHttpServletResponse resp = context.response();
+        final @NotNull MockSlingJakartaHttpServletRequest req = context.jakartaRequest();
+        final @NotNull MockSlingJakartaHttpServletResponse resp = context.jakartaResponse();
         plugin.service(req, resp);
         final String outputAsString = resp.getOutputAsString();
         assertNotNull(outputAsString);
@@ -95,8 +95,8 @@ class OsgiInstallerWebConsolePluginTest {
         final InstallationState mockInstallationState = mockInstallationState();
         mockBasicActiveResources(mockInstallationState);
 
-        final @NotNull MockSlingHttpServletRequest req = context.request();
-        final @NotNull MockSlingHttpServletResponse resp = context.response();
+        final @NotNull MockSlingJakartaHttpServletRequest req = context.jakartaRequest();
+        final @NotNull MockSlingJakartaHttpServletResponse resp = context.jakartaResponse();
         plugin.service(req, resp);
         final String outputAsString = resp.getOutputAsString();
         assertNotNull(outputAsString);
@@ -109,8 +109,8 @@ class OsgiInstallerWebConsolePluginTest {
         final InstallationState mockInstallationState = mockInstallationState();
         mockBasicInstalledResources(mockInstallationState);
 
-        final @NotNull MockSlingHttpServletRequest req = context.request();
-        final @NotNull MockSlingHttpServletResponse resp = context.response();
+        final @NotNull MockSlingJakartaHttpServletRequest req = context.jakartaRequest();
+        final @NotNull MockSlingJakartaHttpServletResponse resp = context.jakartaResponse();
         plugin.service(req, resp);
         final String outputAsString = resp.getOutputAsString();
         assertNotNull(outputAsString);
@@ -123,8 +123,8 @@ class OsgiInstallerWebConsolePluginTest {
         final InstallationState mockInstallationState = mockInstallationState();
         mockBasicUntransformedResources(mockInstallationState);
 
-        final @NotNull MockSlingHttpServletRequest req = context.request();
-        final @NotNull MockSlingHttpServletResponse resp = context.response();
+        final @NotNull MockSlingJakartaHttpServletRequest req = context.jakartaRequest();
+        final @NotNull MockSlingJakartaHttpServletResponse resp = context.jakartaResponse();
         plugin.service(req, resp);
         final String outputAsString = resp.getOutputAsString();
         assertNotNull(outputAsString);
@@ -141,7 +141,7 @@ class OsgiInstallerWebConsolePluginTest {
         final InstallationState mockInstallationState = mockInstallationState();
         mockBasicActiveResources(mockInstallationState);
 
-        final @NotNull MockSlingHttpServletResponse resp = context.response();
+        final @NotNull MockSlingJakartaHttpServletResponse resp = context.jakartaResponse();
         final PrintWriter pw = resp.getWriter();
         plugin.printConfiguration(pw, mode);
         final String outputAsString = resp.getOutputAsString();
@@ -155,7 +155,7 @@ class OsgiInstallerWebConsolePluginTest {
         final InstallationState mockInstallationState = mockInstallationState();
         mockBasicInstalledResources(mockInstallationState);
 
-        final @NotNull MockSlingHttpServletResponse resp = context.response();
+        final @NotNull MockSlingJakartaHttpServletResponse resp = context.jakartaResponse();
         final PrintWriter pw = resp.getWriter();
         plugin.printConfiguration(pw, "txt");
         final String outputAsString = resp.getOutputAsString();
@@ -169,7 +169,7 @@ class OsgiInstallerWebConsolePluginTest {
         final InstallationState mockInstallationState = mockInstallationState();
         mockBasicUntransformedResources(mockInstallationState);
 
-        final @NotNull MockSlingHttpServletResponse resp = context.response();
+        final @NotNull MockSlingJakartaHttpServletResponse resp = context.jakartaResponse();
         final PrintWriter pw = resp.getWriter();
         plugin.printConfiguration(pw, "zip");
         final String outputAsString = resp.getOutputAsString();
@@ -179,7 +179,7 @@ class OsgiInstallerWebConsolePluginTest {
 
     @Test
     void testPrintConfigurationForInvalidMode() {
-        final @NotNull MockSlingHttpServletResponse resp = context.response();
+        final @NotNull MockSlingJakartaHttpServletResponse resp = context.jakartaResponse();
         final PrintWriter pw = resp.getWriter();
         plugin.printConfiguration(pw, "invalid");
         final String outputAsString = resp.getOutputAsString();

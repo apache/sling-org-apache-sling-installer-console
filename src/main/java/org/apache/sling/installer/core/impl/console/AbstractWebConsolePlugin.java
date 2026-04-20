@@ -18,9 +18,9 @@
  */
 package org.apache.sling.installer.core.impl.console;
 
-import javax.servlet.GenericServlet;
-
 import java.net.URL;
+
+import jakarta.servlet.GenericServlet;
 
 @SuppressWarnings("serial")
 abstract class AbstractWebConsolePlugin extends GenericServlet {
